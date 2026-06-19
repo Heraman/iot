@@ -1,38 +1,58 @@
 from educator import *
 import time
 
-BATAS_KELEMBAPAN = 20
+allowed_uid = bytearray(b'\x96\xfd\xe1\xbd')
+
+def tit_tut():
+    beep.time(150)  
+    time.sleep(0.1)
+
+    beep.time(400)  
+    time.sleep(0.1)
+
+    beep.time(150)  
+    time.sleep(0.1)
+
+    beep.time(400)  
 
 while True:
-    try:
-        #SENSOR SUHU
-        suhu, hum = Port1.DHT11(pin=1)
 
-        print("Suhu:", suhu)
-        print("Kelembapan:", hum)
+    uid = Port1.read_RFID()
 
-        oled.print(1, 1, f"Temp:{suhu}C", clear_row=1)
-        oled.print(2, 1, f"Hum :{hum}%", clear_row=1)
+    if uid:
 
-        if hum < BATAS_KELEMBAPAN:
-            oled.print(3, 1, "Pompa ON", clear_row=1)
+        print("UID =", uid)
 
-            # Nyalakan pompa
-            Port2.output_IO(pin=1, value=1)
+        if uid == allowed_uid:
 
+            oled.print(1, 1, "Akses Diterima", clear_row=1)
             beep.time(200)
 
-            time.sleep(10)
+            Port3.output_IO(pin=1, value=0)
 
-            # Matikan pompa
-            Port2.output_IO(pin=1, value=0)
+            # BUKA PINTU
+            Port2.servo_angle(2, 90)
+            time.sleep(5)
+
+            # TUTUP PINTU
+            Port2.servo_angle(2, 0)
 
         else:
-            oled.print(3, 1, "Pompa OFF", clear_row=1)
-            Port2.output_IO(pin=1, value=0)
 
-        time.sleep(30)
-
-    except Exception as e:
-        print(e)
+            oled.print(1, 1, "Akses Ditolak", clear_row=1)
+            
+            tit_tut()
+            Port3.output_IO(pin=1, value=1)
+            
+            time.sleep(2)
+            Port3.output_IO(pin=1, value=0)
+            
+            time.sleep(2)
+            Port3.output_IO(pin=1, value=1)
+            
+            time.sleep(2)
+            Port3.output_IO(pin=1, value=0)
+            
         time.sleep(1)
+
+    time.sleep(0.1)
